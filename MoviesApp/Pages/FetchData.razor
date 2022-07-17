@@ -1,0 +1,88 @@
+﻿@page "/fetchdata"
+@inject HttpClient Http
+@using AppModels
+@using System.Text.Json
+@using System.Text.Json.Serialization;
+
+
+<PageTitle>Movie trailer search</PageTitle>
+
+<h1>Movie trailer search</h1>
+
+<input type="search" @bind="movieNameShow" />
+
+<InputText id="movieName" @bind="movieName" />
+
+<button class="btn btn-primary" @onclick="SearchMovie">Search</button>
+
+<iframe width="560" height="315" src="@videoUrl" frameborder="0" allowtransparency="true" hidden="@showVideo" allowfullscreen></iframe>
+
+@if(movieList.Results != null)
+{
+    <table class="table table-bordered table-striped mb-0">
+        <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Action</th>
+            <th>Movie ID</th>
+        </tr>
+        @foreach (var movie in movieList.Results)
+        {
+            <tr>
+                <td><img height="125" width="75" src="@movie.Image"/></td>
+                <td>@movie.Title</td>
+                <td><button class="btn btn-link" @onclick="@(() => GetMovieTrailer(@movie.Id))">Show trailer</button></td>
+                <td>@movie.Id</td>
+            </tr>
+        }
+    </table>
+}
+
+
+
+@code {
+    public MoviceCollection movieList { get; set; } = new MoviceCollection();
+    private YouTubeTrailerData trailerData { get; set; }
+
+    private string movieNameShow;
+    private string movieId;
+    private string videoUrl = "";
+    private bool showVideo = true;
+
+    /**
+     * Lista za pamćenje filmova koji su traženi
+     *     -> Ako je pretraga bila uspješna
+     *     -> Ako pretraga nije bila uspješna
+     * 
+     * Lista za pamćenje YouTube linkova
+     */
+
+    private async Task SearchMovie()
+    {
+        try
+        {
+            movieList = await Http.GetFromJsonAsync<MoviceCollection>("api/Movies/" + movieNameShow);
+        }
+        catch (Exception e)
+        {
+        }
+    }
+
+    private async Task GetMovieTrailer(string movieId)
+    {
+        try
+        {
+            trailerData = await Http.GetFromJsonAsync<YouTubeTrailerData>("api/Movies/YoutubeTrailer/" + movieId);
+            videoUrl = "https://www.youtube.com/embed/" + trailerData.VideoId;
+            showVideo = false;
+        }
+        catch (Exception e)
+        {
+        }
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+}

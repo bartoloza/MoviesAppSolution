@@ -1,0 +1,79 @@
+﻿@page "/youtubeapi"
+
+@inject HttpClient Http
+@using AppModels
+@using System.Text.Json
+@using System.Text.Json.Serialization;
+
+
+<PageTitle>YouTube API</PageTitle>
+
+<h1>YouTube API</h1>
+
+<input type="search" @bind="movieNameShow" />
+
+<InputText id="movieName" @bind="movieName" />
+
+<button class="btn btn-primary" @onclick="SearchMovie">Search</button>
+
+<iframe width="560" height="315" src="@videoUrl" frameborder="0" allowtransparency="true" hidden="@showVideo" allowfullscreen></iframe>
+
+@if(movieList.items != null)
+{
+    <table class="table table-bordered table-striped mb-0">
+        <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Action</th>
+            <th>Movie ID</th>
+        </tr>
+        @foreach (var movie in movieList.items)
+        {
+            <tr>
+                <td><img height="125" width="75" src="@movie.snippet.thumbnails.high.url"/></td>
+                <td>@movie.snippet.title</td>
+                <td><button class="btn btn-link" @onclick="@(() => GetMovieTrailer(@movie.etag))">Show trailer</button></td>
+                <td>@movie.id.videoId</td>
+            </tr>
+        }
+    </table>
+}
+
+
+
+@code {
+    public YoutubeTrailerResponse movieList { get; set; } = new YoutubeTrailerResponse();
+    private YouTubeTrailerData trailerData { get; set; }
+
+    private string movieNameShow;
+    private string movieId;
+    private string videoUrl = "";
+    private bool showVideo = true;
+
+    private async Task SearchMovie()
+    {
+        try
+        {
+            movieList = await Http.GetFromJsonAsync<YoutubeTrailerResponse>("YoutubeApi/Trailer/" + movieNameShow);
+        }
+        catch (Exception e)
+        {
+        }
+    }
+
+    private async Task GetMovieTrailer(string videoUrl)
+    {
+        try
+        {
+            //movieList = await Http.GetFromJsonAsync<YoutubeTrailerResponse>("YoutubeApi/Trailer/" + movieNameShow);
+        }
+        catch (Exception e)
+        {
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+}
+

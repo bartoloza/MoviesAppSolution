@@ -1,0 +1,48 @@
+﻿@page "/fetchdata"
+@inject HttpClient Http
+@using AppModels
+@using System.Text.Json
+@using System.Text.Json.Serialization;
+
+
+<PageTitle>Weather forecast</PageTitle>
+
+<h1>Weather forecast</h1>
+
+<InputText id="movieName" @bind="movieName"/>
+<p>Current count: @movieNameShow</p>
+<button class="btn btn-primary" @onclick="SearchMovie">Search</button>
+
+
+
+@code {
+    MoviceCollection movieList;// = new List<MoviceCollection>();
+    private string movieName;
+    private string movieNameShow;
+
+    private void SearchMovie()
+    {
+        movieNameShow = movieName;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        //movieList = await Http.GetFromJsonAsync<List<MoviceCollection>>("api/Movies/troy");
+
+
+        //try
+        //{
+        //    movieList = await Http.GetFromJsonAsync<MoviceCollection>("api/Movies/troy");
+
+        //}
+        //catch (Exception e)
+        //{
+        //    int y = 2;
+        //    int z = 3;
+
+        //}
+
+        //int x = 1;
+    }
+
+}
