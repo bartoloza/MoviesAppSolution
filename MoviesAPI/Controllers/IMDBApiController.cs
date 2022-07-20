@@ -8,15 +8,15 @@ using System.Text.Json.Nodes;
 
 namespace MoviesAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
-    public class MoviesController : ControllerBase
+    public class IMDBApiController : ControllerBase
     { 
         private readonly IIMDBService _mdbService;
         private readonly ILogger _logger;
 
 
-        public MoviesController(IIMDBService imdbService, ILogger<MoviesController> logger)
+        public IMDBApiController(IIMDBService imdbService, ILogger<IMDBApiController> logger)
         {
             _mdbService = imdbService;
             _logger = logger;
@@ -34,13 +34,6 @@ namespace MoviesAPI.Controllers
         {
             TrailerData moviceCollection = await _mdbService.GetTrailerByMovieIdAsync(movieId);
             return moviceCollection;   
-        }
-
-        [HttpGet("YoutubeTrailer/{movieId}")]
-        public async Task<YouTubeTrailerData> GetYoutubeLinkdAsync(string movieId)
-        {
-            YouTubeTrailerData moviceCollection = await _mdbService.GetYoutubeLinkdAsync(movieId);
-            return moviceCollection;
         }
     }
 }

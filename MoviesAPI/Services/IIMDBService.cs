@@ -6,7 +6,5 @@ namespace MoviesAPI.Services
     {
         public Task<MoviceCollection> GetMoviesByNameAsync(string movieName);
         public Task<TrailerData> GetTrailerByMovieIdAsync(string movieId);
-        public Task<YouTubeTrailerData> GetYoutubeLinkdAsync(string movieId);
-
     }
 }

@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using MoviesAPI.Models;
+﻿using AppModels;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Net;

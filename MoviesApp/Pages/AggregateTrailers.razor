@@ -1,19 +1,80 @@
-﻿@page "/aggregatetrailers"
-<h3>aggregatetrailers</h3>
+﻿@page "/movietrailers"
 
-<PageTitle>Counter</PageTitle>
+@inject HttpClient Http
+@using AppModels
+@using System.Text.Json
+@using System.Text.Json.Serialization;
 
-<h1>Counter</h1>
+<PageTitle>Movie trailers</PageTitle>
 
-<p role="status">Current count: @currentCount</p>
+<h1>Movie trailers</h1>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+@*<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>*@
+
+
+<iframe width="560" height="315" src="@videoUrl" frameborder="0" allowtransparency="true" hidden="@showVideo" allowfullscreen></iframe>
+
+
+@if(cachedTrailers != null)
+{
+    <table class="table table-bordered table-striped mb-0">
+        <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Action</th>
+            <th>Share</th>
+            <th>Movie ID</th>
+        </tr>
+        @foreach (var trailer in cachedTrailers)
+        {
+            <tr>
+                <td><img height="125" width="75" src="@trailer.ImageUrl"/></td>
+                <td>@trailer.Title</td>
+                <td>
+                    <button class="btn btn-link" @onclick="@(() => GetMovieTrailer(@trailer.VIdeoUrl))">Show trailer</button>
+                </td>
+                <td>
+                    <iframe src=@ShareToFacebook(@trailer.VIdeoUrl) width="200" height="75" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                </td>
+                <td>@trailer.Id</td>
+            </tr>
+        }
+    </table>
+}
+
+else
+{
+    <div class="spinner"></div>
+}
 
 @code {
+    private List<VideoTrailer> cachedTrailers { get; set; } = new List<VideoTrailer>();
+    string videoUrl = "";
+    bool showVideo = true;
+
     private int currentCount = 0;
 
-    private void IncrementCount()
+    protected override async Task OnInitializedAsync()
     {
-        currentCount++;
+        cachedTrailers = await Http.GetFromJsonAsync<List<VideoTrailer>>("AggregatedTrailers");
+    }
+
+    private async void IncrementCount()
+    {
+        cachedTrailers = await Http.GetFromJsonAsync<List<VideoTrailer>>("AggregatedTrailers");
+    }
+
+    private string ShareToFacebook(string trailerUrl)
+    {
+        videoUrl = "https://www.facebook.com/plugins/share_button.php?href=" + 
+                    System.Net.WebUtility.UrlEncode(trailerUrl) +
+                    "&layout=button_count&size=large&appId=1221827881970762&width=102&height=28";
+        return videoUrl;
+    }
+
+    private async Task GetMovieTrailer(string trailerUrl)
+    {
+        videoUrl = trailerUrl;
+        showVideo = false;
     }
 }

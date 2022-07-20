@@ -1,3 +1,4 @@
+using Blazored.Toast;
 using MoviesAPI.Middlewares;
 using MoviesAPI.Services;
 using Serilog;
@@ -12,6 +13,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IIMDBService, IMDBService>();
 builder.Services.AddScoped<IYoutubeService, YoutubeService>();
+builder.Services.AddScoped<IAggregatedTrailersService, AggregatedTrailerservice>();
+builder.Services.AddMemoryCache();
+builder.Services.AddBlazoredToast();
 
 
 var logger = new LoggerConfiguration()

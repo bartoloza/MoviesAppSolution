@@ -1,53 +1,95 @@
 ﻿using AppModels;
+using Blazored.Toast.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 
 namespace MoviesAPI.Services
 {
     public class IMDBService : IIMDBService
     {
+        private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _memoryCache;
+        private readonly ILogger _logger;
+
+        public IMDBService(IConfiguration configuration, IMemoryCache memoryCache, ILogger<IMDBService> logger)
+        {
+            _configuration = configuration;
+            _memoryCache = memoryCache;
+            _logger = logger;
+        }
+
         public async Task<MoviceCollection> GetMoviesByNameAsync(string movieName)
         {
-            using (var client = new HttpClient()) 
+            MoviceCollection checkCached;
+
+            checkCached = _memoryCache.Get<MoviceCollection>(movieName+"-imdb");
+
+            if (checkCached is null)
             {
-                var url = $"https://imdb-api.com/en/API/SearchMovie/k_37fmbpj9/{movieName}";
+                using (var client = new HttpClient())
+                {
+                    var url = _configuration.GetValue<string>("urlIMDBSearchMovie") + _configuration.GetValue<string>("APIKeyIMDB") + "/" + movieName;
+                    _logger.LogInformation("IMDB GetMoviesByNameAsync REQUEST  URL: \n" + url);
 
-                var response = await client.GetAsync(url);
-                var responseResults = response.Content.ReadAsStringAsync().Result;
+                    var response = await client.GetAsync(url);
+                    var responseResults = response.Content.ReadAsStringAsync().Result;
+                    _logger.LogInformation("IMDB GetMoviesByNameAsync RESPONSE BODY: \n" + responseResults.ToString());
 
-                MoviceCollection moviceCollection = JsonConvert.DeserializeObject<MoviceCollection>(responseResults);
 
-                return moviceCollection;
+                    checkCached = JsonConvert.DeserializeObject<MoviceCollection>(responseResults);
+
+                    _memoryCache.Set(movieName+"-imdb", checkCached, TimeSpan.FromSeconds(_configuration.GetValue<int>("CacheDuration")));
+                }
             }
+            return checkCached;
         }
 
         public async Task<TrailerData> GetTrailerByMovieIdAsync(string movieId)
         {
-            using (var client = new HttpClient())
+            TrailerData checkCached;
+            checkCached = _memoryCache.Get<TrailerData>(movieId);
+
+            if (checkCached is null)
             {
-                var url = $"https://imdb-api.com/en/API/Trailer/k_37fmbpj9/{movieId}";
+                using (var client = new HttpClient())
+                {
+                    var url = _configuration.GetValue<string>("urlIMDBTrailer") + _configuration.GetValue<string>("APIKeyIMDB") + "/" + movieId;
+                    _logger.LogInformation("IMDB GetTrailerByMovieIdAsync RESPONSE BODY: \n" + url);
 
-                var response = await client.GetAsync(url);
-                var responseResults = response.Content.ReadAsStringAsync().Result;
+                    var response = await client.GetAsync(url);
+                    var responseResults = response.Content.ReadAsStringAsync().Result;
+                    _logger.LogInformation("IMDB GetTrailerByMovieIdAsync RESPONSE BODY: \n" + responseResults.ToString());
 
-                TrailerData moviceCollection = JsonConvert.DeserializeObject<TrailerData>(responseResults);
+                    checkCached = JsonConvert.DeserializeObject<TrailerData>(responseResults);
 
-                return moviceCollection;
+                    if (checkCached.LinkEmbed != null)
+                    {
+                        VideoTrailer videoTrailerCache = IMDBParser(checkCached);
+                    }
+
+                    _memoryCache.Set(movieId, checkCached, TimeSpan.FromSeconds(_configuration.GetValue<int>("CacheDuration")));
+                }
             }
+            return checkCached;
+
         }
 
-        public async Task<YouTubeTrailerData> GetYoutubeLinkdAsync(string movieId)
+        public VideoTrailer IMDBParser(TrailerData trailerData)
         {
-            using (var client = new HttpClient())
+            VideoTrailer videoTrailerCache = new VideoTrailer();
+            if (trailerData is not null)
             {
-                var url = $"https://imdb-api.com/en/API/YouTubeTrailer/k_37fmbpj9/{movieId}";
+                videoTrailerCache.Title = trailerData.FullTitle;
+                videoTrailerCache.Id = trailerData.VideoId;
+                videoTrailerCache.VIdeoUrl = trailerData.LinkEmbed;
+                videoTrailerCache.ImageUrl = trailerData.ThumbnailUrl;
 
-                var response = await client.GetAsync(url);
-                var responseResults = response.Content.ReadAsStringAsync().Result;
+                _memoryCache.Set(trailerData.Title + "-imdbCache", videoTrailerCache, TimeSpan.FromSeconds(_configuration.GetValue<int>("CacheDuration")));
+                VideoTrailerCacheAbstract.VideoTrailerCaches.Add(trailerData.FullTitle + "-imdbCache");
+                VideoTrailerCollection.VideoTrailerCollectionList.Add(videoTrailerCache);
 
-                YouTubeTrailerData moviceCollection = JsonConvert.DeserializeObject<YouTubeTrailerData>(responseResults);
-
-                return moviceCollection;
             }
+            return videoTrailerCache;
         }
     }
 }

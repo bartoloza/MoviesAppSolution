@@ -11,7 +11,7 @@ namespace MoviesAPI.Controllers
         private readonly IYoutubeService _youtubeService;
         private readonly ILogger _logger;
 
-        public YoutubeApiController(IYoutubeService youtubeService, ILogger<MoviesController> logger)
+        public YoutubeApiController(IYoutubeService youtubeService, ILogger<IMDBApiController> logger)
         {
             _youtubeService = youtubeService;
             _logger = logger;
@@ -21,6 +21,7 @@ namespace MoviesAPI.Controllers
         public async Task<YoutubeTrailerResponse> GetMoviesByNameAsync(string movieName)
         {
             YoutubeTrailerResponse moviceCollection = await _youtubeService.GetTrailerByMovieNameAsync(movieName);
+            _logger.LogError("YOUTUBE RESPONSE LOG: " + moviceCollection.ToString());
             return moviceCollection;
         }
 

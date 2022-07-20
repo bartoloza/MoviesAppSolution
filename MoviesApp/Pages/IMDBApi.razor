@@ -1,18 +1,87 @@
 ﻿@page "/imdbapi"
+@inject HttpClient Http
+@inject IToastService toastService
+@using AppModels
+@using System.Text.Json
+@using System.Text.Json.Serialization;
 
-<PageTitle>Counter</PageTitle>
+<PageTitle>IMDB API</PageTitle>
 
-<h1>Counter</h1>
+<h1>IMDB API</h1>
 
-<p role="status">Current count: @currentCount</p>
+<table>
+    <tr>
+        <td><input type="search" @bind="movieNameShow" /></td>
+        <td><button class="btn btn-primary" @onclick="SearchMovie">Search</button></td>
+        <td><div class="loader" hidden=@spinner_hidden></div></td>
+    </tr>
+</table>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+@if(movieList.Results != null)
+{
+    <table class="table table-bordered table-striped mb-0">
+        <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Action</th>
+            <th>Movie ID</th>
+        </tr>
+        @foreach (var movie in movieList.Results)
+        {
+            <tr>
+                <td><img height="125" width="75" src="@movie.Image"/></td>
+                <td>@movie.Title</td>
+                <td><button class="btn btn-primary active" @onclick="@(() => GetMovieTrailer(@movie.Id))">Request trailer</button></td>
+                <td>@movie.Id</td>
+            </tr>
+        }
+    </table>
+}
+
 
 @code {
-    private int currentCount = 0;
+    private ToastLevel toastLevel;
+    private string toastMessage;
 
-    private void IncrementCount()
+    public MoviceCollection movieList { get; set; } = new MoviceCollection();
+    private TrailerData trailerData { get; set; }
+
+    private string movieNameShow = "";
+    private string movieId;
+    private bool spinner_hidden = true;
+
+    private async Task SearchMovie()
     {
-        currentCount++;
+        if (movieNameShow.Trim() == "")
+        {
+            toastService.ShowToast(ToastLevel.Error, "You must enter a movie name!");
+        }
+        else
+        {
+            spinner_hidden = false;
+            movieList = await Http.GetFromJsonAsync<MoviceCollection>("IMDBApi/" + movieNameShow);
+            spinner_hidden = true;
+
+            if (movieList.Results.Count > 0)
+                toastService.ShowToast(ToastLevel.Success, "Movies retrieved!");
+            else
+                toastService.ShowToast(ToastLevel.Warning, "No movies retrieved!");
+        }
+
     }
+
+    private async Task GetMovieTrailer(string movieId)
+    {
+        trailerData = await Http.GetFromJsonAsync<TrailerData>("IMDBApi/Trailer/" + movieId);
+
+        if (trailerData.LinkEmbed != null)
+            toastService.ShowToast(ToastLevel.Success, "Trailer requested!");
+        else
+            toastService.ShowToast(ToastLevel.Error, "Error while requesting trailer, no video URL provided from API!");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
 }
